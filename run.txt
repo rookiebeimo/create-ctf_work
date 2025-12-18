@@ -1,0 +1,55 @@
+1.创建MySQL数据库和用户
+
+```
+-- 使用MySQL命令行或MySQL Workbench
+CREATE DATABASE ctf_platform CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 创建专用用户
+CREATE USER 'ctf_user'@'localhost' IDENTIFIED BY '031006';
+GRANT ALL PRIVILEGES ON ctf_platform.* TO 'ctf_user'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+2.安装依赖进入ctf-platform目录
+
+```
+pip install -r requirements.txt
+```
+
+3.初始化数据库
+
+```
+python init_database.py
+```
+
+4.开发环境运行
+
+```
+set FLASK_ENV=development
+```
+
+5.运行应用
+
+```
+python app.py
+```
+
+6.可选：生产环境运行
+
+```
+pip install waitress
+waitress-serve --host=0.0.0.0 --port=5000 app:app
+```
+
+7.访问网页
+
+```
+ http://localhost:5000
+```
+
+8.进入ctf-frontend
+
+```
+python -m http.server 8000
+```
+

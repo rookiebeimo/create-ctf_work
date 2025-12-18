@@ -1,0 +1,43 @@
+# Flask框架
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+Flask-CORS==4.0.0
+flask_login
+
+# 数据库驱动
+PyMySQL==1.1.0
+mysqlclient==2.1.1
+
+# 认证和安全
+PyJWT==2.8.0
+Werkzeug==2.3.7
+bcrypt==4.0.1
+
+# 文件处理
+python-magic==0.4.27
+
+# 邮件支持
+Flask-Mail==0.9.1
+
+# 缓存
+Redis==5.0.1
+Flask-Caching==2.0.2
+
+# API文档
+Flask-RESTful==0.3.10
+Flask-Swagger-UI==4.11.1
+
+# 工具库
+requests==2.31.0
+python-dotenv==1.0.0
+click==8.1.7
+
+# 开发工具
+black==23.9.1
+flake8==6.1.0
+pytest==7.4.2
+pytest-flask==1.2.0
+
+# Windows特定依赖（如果需要）
+pywin32==306; sys_platform == 'win32'

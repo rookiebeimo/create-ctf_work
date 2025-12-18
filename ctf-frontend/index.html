@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CTF平台 - 网络安全竞赛平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .jumbotron {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            border-radius: 10px 10px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .challenge-card {
+            cursor: pointer;
+        }
+        
+        .badge-difficulty-easy {
+            background-color: var(--success-color);
+        }
+        
+        .badge-difficulty-medium {
+            background-color: var(--warning-color);
+        }
+        
+        .badge-difficulty-hard {
+            background-color: #e67e22;
+        }
+        
+        .badge-difficulty-expert {
+            background-color: var(--danger-color);
+        }
+        
+        .user-rank-1 {
+            background-color: #fff9c4 !important;
+        }
+        
+        .user-rank-2 {
+            background-color: #f5f5f5 !important;
+        }
+        
+        .user-rank-3 {
+            background-color: #ffecb3 !important;
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .nav-tabs .nav-link.active {
+            font-weight: bold;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+        
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-flag"></i> CTF平台
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-page="home">
+                        <i class="fas fa-home"></i> 首页
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-page="challenges">
+                        <i class="fas fa-puzzle-piece"></i> 题目
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-page="leaderboard">
+                        <i class="fas fa-trophy"></i> 排行榜
+                    </a>
+                </li>
+                <!-- 管理员菜单 - 只有管理员可见 -->
+                <li class="nav-item admin-only" style="display: none;">
+                    <a class="nav-link" href="#" data-page="admin">
+                        <i class="fas fa-cog"></i> 管理
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav" id="auth-nav">
+                <!-- 登录/注册按钮将在这里动态生成 -->
+            </ul>
+        </div>
+    </div>
+</nav>
+
+    <!-- 主要内容区域 -->
+    <main class="container mt-4">
+        <!-- 首页 -->
+        <div id="home-page" class="page active">
+            <div class="row">
+                <div class="col-12">
+                    <div class="jumbotron bg-primary text-white p-5 rounded">
+                        <h1 class="display-4">欢迎来到CTF平台</h1>
+                        <p class="lead">一个专业的网络安全竞赛平台，测试您的技能，挑战自我！</p>
+                        <hr class="my-4">
+                        <p>加入我们，参与各种网络安全挑战，提升您的技能。</p>
+                        <a class="btn btn-light btn-lg" href="#" data-page="challenges">开始挑战</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-puzzle-piece fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">多样题目</h5>
+                            <p class="card-text">涵盖Web安全、密码学、逆向工程、Pwn等多种类型</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">实时排名</h5>
+                            <p class="card-text">动态积分系统，实时更新排行榜，激励竞争</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <i class="fas fa-users fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">社区互动</h5>
+                            <p class="card-text">与总榜单安全爱好者交流学习，共同进步</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 登录页面 -->
+        <div id="login-page" class="page">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">用户登录</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="login-form">
+                                <div class="mb-3">
+                                    <label for="login-username" class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="login-username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="login-password" class="form-label">密码</label>
+                                    <input type="password" class="form-control" id="login-password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">登录</button>
+                            </form>
+                            <div class="text-center mt-3">
+                                <p>还没有账户？ <a href="#" data-page="register">立即注册</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 注册页面 -->
+        <div id="register-page" class="page">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">用户注册</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="register-form">
+                                <div class="mb-3">
+                                    <label for="register-username" class="form-label">用户名</label>
+                                    <input type="text" class="form-control" id="register-username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-email" class="form-label">邮箱</label>
+                                    <input type="email" class="form-control" id="register-email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password" class="form-label">密码</label>
+                                    <input type="password" class="form-control" id="register-password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="register-password-confirm" class="form-label">确认密码</label>
+                                    <input type="password" class="form-control" id="register-password-confirm" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">注册</button>
+                            </form>
+                            <div class="text-center mt-3">
+                                <p>已有账户？ <a href="#" data-page="login">立即登录</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 题目页面 -->
+        <div id="challenges-page" class="page">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>题目列表</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary active" data-category="all">全部</button>
+                    <button type="button" class="btn btn-outline-primary" data-category="Web">Web</button>
+                    <button type="button" class="btn btn-outline-primary" data-category="Pwn">Pwn</button>
+                    <button type="button" class="btn btn-outline-primary" data-category="Reverse">Reverse</button>
+                    <button type="button" class="btn btn-outline-primary" data-category="Crypto">Crypto</button>
+                    <button type="button" class="btn btn-outline-primary" data-category="Misc">Misc</button>
+                </div>
+            </div>
+            
+            <div class="row" id="challenges-list">
+                <!-- 题目列表将在这里动态生成 -->
+            </div>
+        </div>
+
+        <!-- 题目详情页面 -->
+        <div id="challenge-detail-page" class="page">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 id="challenge-title">题目详情</h2>
+                <button class="btn btn-outline-secondary" id="back-to-challenges">
+                    <i class="fas fa-arrow-left"></i> 返回题目列表
+                </button>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span id="challenge-category" class="badge bg-primary"></span>
+                    <span id="challenge-points" class="badge bg-success"></span>
+                </div>
+                <div class="card-body">
+                    <div id="challenge-description" class="mb-4"></div>
+                    
+                    <div id="challenge-hints" class="mb-4" style="display: none;">
+                        <h5>提示</h5>
+                        <ul id="hints-list"></ul>
+                    </div>
+                    
+                    <form id="submit-flag-form">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="请输入Flag" id="flag-input" required>
+                            <button class="btn btn-primary" type="submit">提交</button>
+                        </div>
+                    </form>
+                    
+                    <div id="submission-result" class="mt-3" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 排行榜页面 -->
+        <div id="leaderboard-page" class="page">
+            <h2 class="mb-4">排行榜</h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="leaderboard-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#global-leaderboard">总榜单排名</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#category-leaderboard">分类排名</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="global-leaderboard">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>排名</th>
+                                            <th>用户名</th>
+                                            <th>分数</th>
+                                            <th>解题数</th>
+                                            <th>最近解题</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="global-leaderboard-body">
+                                        <!-- 排行榜数据将在这里动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="category-leaderboard">
+                            <div class="mb-3">
+                                <select class="form-select" id="category-select">
+                                    <!-- 分类选项将在这里动态生成 -->
+                                </select>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>排名</th>
+                                            <th>用户名</th>
+                                            <th>分数</th>
+                                            <th>解题数</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="category-leaderboard-body">
+                                        <!-- 分类排行榜数据将在这里动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 用户资料页面 -->
+        <div id="profile-page" class="page">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                            </div>
+                            <h4 id="profile-username"></h4>
+                            <p class="text-muted" id="profile-email"></p>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-danger" id="logout-btn">退出登录</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">统计信息</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <h4 id="profile-score" class="text-primary">0</h4>
+                                    <small class="text-muted">总分</small>
+                                </div>
+                                <div class="col-6">
+                                    <h4 id="profile-solved" class="text-success">0</h4>
+                                    <small class="text-muted">解题数</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">提交记录</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>题目</th>
+                                            <th>提交时间</th>
+                                            <th>状态</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="submissions-list">
+                                        <!-- 提交记录将在这里动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 加载提示 -->
+    <div id="loading" class="d-none">
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <span class="ms-2">加载中...</span>
+        </div>
+    </div>
+    <!-- 管理员页面 -->
+<div id="admin-page" class="page">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>管理面板</h2>
+    </div>
+    
+    <div class="row">
+        <!-- 统计卡片 -->
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="admin-users-count">0</h4>
+                            <p>注册用户</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="admin-challenges-count">0</h4>
+                            <p>题目数量</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-puzzle-piece fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="admin-submissions-count">0</h4>
+                            <p>提交记录</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-flag fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 管理功能选项卡 -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="adminTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#admin-challenges">题目管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#admin-users">用户管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#admin-categories">分类管理</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#admin-system">系统管理</a>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content">
+                <!-- 题目管理 -->
+                <div class="tab-pane fade show active" id="admin-challenges">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>题目管理</h5>
+                        <button class="btn btn-primary" id="add-challenge-btn">
+                            <i class="fas fa-plus"></i> 添加题目
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>标题</th>
+                                    <th>分类</th>
+                                    <th>难度</th>
+                                    <th>分数</th>
+                                    <th>解决数</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-challenges-list">
+                                <!-- 题目列表将在这里动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 用户管理 -->
+                <div class="tab-pane fade" id="admin-users">
+                    <h5>用户管理</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>用户名</th>
+                                    <th>邮箱</th>
+                                    <th>分数</th>
+                                    <th>注册时间</th>
+                                    <th>角色</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-list">
+                                <!-- 用户列表将在这里动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 分类管理 -->
+                <div class="tab-pane fade" id="admin-categories">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>分类管理</h5>
+                        <button class="btn btn-primary" id="add-category-btn">
+                            <i class="fas fa-plus"></i> 添加分类
+                        </button>
+                    </div>
+                    <div class="row" id="admin-categories-list">
+                        <!-- 分类列表将在这里动态生成 -->
+                    </div>
+                </div>
+                
+                <!-- 系统管理 -->
+                <div class="tab-pane fade" id="admin-system">
+                    <h5>系统管理</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>系统操作</h6>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" id="update-scores-btn">
+                                            更新题目分数
+                                        </button>
+                                        <button class="btn btn-outline-info" id="export-data-btn">
+                                            导出平台数据
+                                        </button>
+                                        <button class="btn btn-outline-warning" id="clear-cache-btn">
+                                            清除缓存
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>系统信息</h6>
+                                    <div id="system-info">
+                                        <!-- 系统信息将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- 消息提示 -->
+    <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API基础URL
+        const API_BASE = 'http://localhost:5000/api/v1';
+
+        // 工具函数
+        const Utils = {
+            // 显示加载提示
+            showLoading() {
+                document.getElementById('loading').classList.remove('d-none');
+            },
+            
+            // 隐藏加载提示
+            hideLoading() {
+                document.getElementById('loading').classList.add('d-none');
+            },
+            
+            // 显示消息提示
+            showAlert(message, type = 'info') {
+                const alertContainer = document.getElementById('alert-container');
+                const alertId = 'alert-' + Date.now();
+                
+                const alertHTML = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                alertContainer.innerHTML += alertHTML;
+                
+                // 5秒后自动关闭
+                setTimeout(() => {
+                    const alert = document.getElementById(alertId);
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 5000);
+            },
+            
+            // 切换页面
+            showPage(pageId) {
+                // 隐藏所有页面
+                document.querySelectorAll('.page').forEach(page => {
+                    page.classList.remove('active');
+                });
+                
+                // 显示目标页面
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
+                }
+            },
+            
+            // 格式化日期
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-CN');
+            },
+            
+            // 获取难度标签类名
+            getDifficultyClass(difficulty) {
+                switch (difficulty) {
+                    case 'easy': return 'badge-difficulty-easy';
+                    case 'medium': return 'badge-difficulty-medium';
+                    case 'hard': return 'badge-difficulty-hard';
+                    case 'expert': return 'badge-difficulty-expert';
+                    default: return 'badge-secondary';
+                }
+            },
+            
+            // 获取难度中文名称
+            getDifficultyText(difficulty) {
+                switch (difficulty) {
+                    case 'easy': return '简单';
+                    case 'medium': return '中等';
+                    case 'hard': return '困难';
+                    case 'expert': return '专家';
+                    default: return difficulty;
+                }
+            },
+            
+            // 设置认证token
+            setAuthToken(token) {
+                localStorage.setItem('ctf_token', token);
+            },
+            
+            // 获取认证token
+            getAuthToken() {
+                return localStorage.getItem('ctf_token');
+            },
+            
+            // 移除认证token
+            removeAuthToken() {
+                localStorage.removeItem('ctf_token');
+            },
+            
+            // 检查是否已登录
+            isLoggedIn() {
+                return !!this.getAuthToken();
+            },
+            
+            // API请求封装
+            async apiRequest(endpoint, options = {}) {
+                const token = this.getAuthToken();
+                const defaultOptions = {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (token) {
+                    defaultOptions.headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const finalOptions = { ...defaultOptions, ...options };
+                
+                try {
+                    this.showLoading();
+                    const response = await fetch(`${API_BASE}${endpoint}`, finalOptions);
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.message || '请求失败');
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    this.showAlert(error.message, 'danger');
+                    throw error;
+                } finally {
+                    this.hideLoading();
+                }
+            }
+        };
+
+        // 认证相关功能
+        const Auth = {
+            // 初始化认证状态
+            init() {
+                this.updateAuthUI();
+                
+                // 登录表单提交
+                document.getElementById('login-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.login();
+                });
+                
+                // 注册表单提交
+                document.getElementById('register-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.register();
+                });
+                
+                // 退出登录
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    this.logout();
+                });
+            },
+            
+            // 更新认证UI
+            updateAuthUI() {
+                const authNav = document.getElementById('auth-nav');
+                const adminMenuItems = document.querySelectorAll('.admin-only');
+                
+                if (Utils.isLoggedIn()) {
+                    // 用户已登录，显示用户信息和退出按钮
+                    authNav.innerHTML = `
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-page="profile">
+                                <i class="fas fa-user"></i> 个人中心
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="logout-link">
+                                <i class="fas fa-sign-out-alt"></i> 退出
+                            </a>
+                        </li>
+                    `;
+                    
+                    // 添加退出登录事件
+                    document.getElementById('logout-link').addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.logout();
+                    });
+                    
+                    // 加载用户信息并检查管理员权限
+                    this.checkAdminStatus();
+                    
+                } else {
+                    // 用户未登录，显示登录注册按钮
+                    authNav.innerHTML = `
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-page="login">
+                                <i class="fas fa-sign-in-alt"></i> 登录
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-page="register">
+                                <i class="fas fa-user-plus"></i> 注册
+                            </a>
+                        </li>
+                    `;
+                    
+                    // 隐藏管理员菜单
+                    adminMenuItems.forEach(item => {
+                        item.style.display = 'none';
+                    });
+                }
+            },
+
+            // 检查管理员状态
+            async checkAdminStatus() {
+                try {
+                    const data = await Utils.apiRequest('/auth/profile');
+                    const user = data.user;
+                    
+                    const adminMenuItems = document.querySelectorAll('.admin-only');
+                    if (user && user.is_admin) {
+                        // 显示管理员菜单
+                        adminMenuItems.forEach(item => {
+                            item.style.display = 'block';
+                        });
+                    } else {
+                        // 隐藏管理员菜单
+                        adminMenuItems.forEach(item => {
+                            item.style.display = 'none';
+                        });
+                    }
+                } catch (error) {
+                    console.error('检查管理员状态失败:', error);
+                    // 如果获取用户信息失败，隐藏管理员菜单
+                    const adminMenuItems = document.querySelectorAll('.admin-only');
+                    adminMenuItems.forEach(item => {
+                        item.style.display = 'none';
+                    });
+                }
+            },
+            
+            // 用户登录
+            async login() {
+                const username = document.getElementById('login-username').value;
+                const password = document.getElementById('login-password').value;
+                
+                try {
+                    const data = await Utils.apiRequest('/auth/login', {
+                        method: 'POST',
+                        body: JSON.stringify({ username, password })
+                    });
+                    
+                    Utils.setAuthToken(data.token);
+                    Utils.showAlert('登录成功！', 'success');
+                    this.updateAuthUI();
+                    Utils.showPage('home');
+                } catch (error) {
+                    // 错误处理已在apiRequest中完成
+                }
+            },
+            
+            // 用户注册
+            async register() {
+                const username = document.getElementById('register-username').value;
+                const email = document.getElementById('register-email').value;
+                const password = document.getElementById('register-password').value;
+                const passwordConfirm = document.getElementById('register-password-confirm').value;
+                
+                if (password !== passwordConfirm) {
+                    Utils.showAlert('两次输入的密码不一致', 'danger');
+                    return;
+                }
+                
+                try {
+                    await Utils.apiRequest('/auth/register', {
+                        method: 'POST',
+                        body: JSON.stringify({ username, email, password })
+                    });
+                    
+                    Utils.showAlert('注册成功，请登录！', 'success');
+                    Utils.showPage('login');
+                } catch (error) {
+                    // 错误处理已在apiRequest中完成
+                }
+            },
+            
+            // 退出登录
+            logout() {
+                Utils.removeAuthToken();
+                Utils.showAlert('已退出登录', 'info');
+                this.updateAuthUI();
+                Utils.showPage('home');
+            },
+            
+            // 加载用户信息
+            async loadUserProfile() {
+                try {
+                    const data = await Utils.apiRequest('/auth/profile');
+                    this.displayUserProfile(data.user);
+                    return data.user;
+                } catch (error) {
+                    // 如果获取用户信息失败，可能是token过期，强制退出登录
+                    if (error.message.includes('Token') || error.message.includes('Unauthorized')) {
+                        this.logout();
+                    }
+                    throw error;
+                }
+            },
+            
+            // 显示用户信息
+            displayUserProfile(user) {
+                // 更新个人中心页面
+                document.getElementById('profile-username').textContent = user.username;
+                document.getElementById('profile-email').textContent = user.email;
+                document.getElementById('profile-score').textContent = user.score || 0;
+                
+                // 检查并更新管理员菜单显示状态
+                const adminMenuItems = document.querySelectorAll('.admin-only');
+                if (user && user.is_admin) {
+                    adminMenuItems.forEach(item => {
+                        item.style.display = 'block';
+                    });
+                } else {
+                    adminMenuItems.forEach(item => {
+                        item.style.display = 'none';
+                    });
+                }
+                
+                // 加载提交记录
+                this.loadUserSubmissions(user.id);
+            },
+            
+            // 加载用户提交记录
+            async loadUserSubmissions(userId) {
+                try {
+                    const data = await Utils.apiRequest(`/submissions/user/${userId}`);
+                    this.displaySubmissions(data.submissions);
+                } catch (error) {
+                    console.error('加载提交记录失败:', error);
+                }
+            },
+            
+            // 显示提交记录
+            displaySubmissions(submissions) {
+                const submissionsList = document.getElementById('submissions-list');
+                
+                if (submissions.length === 0) {
+                    submissionsList.innerHTML = '<tr><td colspan="3" class="text-center">暂无提交记录</td></tr>';
+                    return;
+                }
+                
+                submissionsList.innerHTML = submissions.map(submission => `
+                    <tr>
+                        <td>${submission.challenge_title}</td>
+                        <td>${Utils.formatDate(submission.submitted_at)}</td>
+                        <td>
+                            <span class="badge ${submission.is_correct ? 'bg-success' : 'bg-danger'}">
+                                ${submission.is_correct ? '正确' : '错误'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        };
+
+        // 题目相关功能
+        const Challenges = {
+            currentChallenges: [],
+            currentChallenge: null,
+            
+            // 初始化
+            init() {
+                // 返回题目列表按钮
+                document.getElementById('back-to-challenges').addEventListener('click', () => {
+                    Utils.showPage('challenges-page');
+                });
+                
+                // 分类筛选
+                document.querySelectorAll('[data-category]').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const category = e.target.getAttribute('data-category');
+                        this.filterChallenges(category);
+                        
+                        // 更新按钮状态
+                        document.querySelectorAll('[data-category]').forEach(btn => {
+                            btn.classList.remove('active');
+                        });
+                        e.target.classList.add('active');
+                    });
+                });
+                
+                // 提交Flag表单
+                document.getElementById('submit-flag-form').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.submitFlag();
+                });
+            },
+            
+            // 加载题目列表
+            async loadChallenges() {
+                try {
+                    const data = await Utils.apiRequest('/challenges');
+                    this.currentChallenges = data.challenges;
+                    this.displayChallenges(this.currentChallenges);
+                } catch (error) {
+                    console.error('加载题目失败:', error);
+                }
+            },
+            
+            // 显示题目列表
+            displayChallenges(challenges) {
+                const challengesList = document.getElementById('challenges-list');
+                
+                if (challenges.length === 0) {
+                    challengesList.innerHTML = '<div class="col-12 text-center"><p>暂无题目</p></div>';
+                    return;
+                }
+                
+                challengesList.innerHTML = challenges.map(challenge => `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card challenge-card h-100" data-challenge-id="${challenge.id}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title">${challenge.title}</h5>
+                                    <span class="badge ${Utils.getDifficultyClass(challenge.difficulty)}">
+                                        ${Utils.getDifficultyText(challenge.difficulty)}
+                                    </span>
+                                </div>
+                                <p class="card-text text-muted small">${challenge.description.substring(0, 100)}...</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-primary">${challenge.category}</span>
+                                    <span class="badge bg-success">${challenge.points} 分</span>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users"></i> ${challenge.solved_count} 人解决
+                                        ${challenge.is_solved ? '<span class="badge bg-success ms-2">已解决</span>' : ''}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 添加点击事件
+                document.querySelectorAll('.challenge-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const challengeId = card.getAttribute('data-challenge-id');
+                        this.showChallengeDetail(challengeId);
+                    });
+                });
+            },
+            
+            // 筛选题目
+            filterChallenges(category) {
+                if (category === 'all') {
+                    this.displayChallenges(this.currentChallenges);
+                } else {
+                    const filtered = this.currentChallenges.filter(challenge => 
+                        challenge.category === category
+                    );
+                    this.displayChallenges(filtered);
+                }
+            },
+            
+            // 显示题目详情
+            async showChallengeDetail(challengeId) {
+                try {
+                    const data = await Utils.apiRequest(`/challenges/${challengeId}`);
+                    this.currentChallenge = data.challenge;
+                    this.displayChallengeDetail(this.currentChallenge);
+                    Utils.showPage('challenge-detail-page');
+                } catch (error) {
+                    console.error('加载题目详情失败:', error);
+                }
+            },
+            
+            // 显示题目详情
+            displayChallengeDetail(challenge) {
+                document.getElementById('challenge-title').textContent = challenge.title;
+                document.getElementById('challenge-category').textContent = challenge.category;
+                document.getElementById('challenge-points').textContent = `${challenge.points} 分`;
+                document.getElementById('challenge-description').innerHTML = 
+                    `<p>${challenge.description.replace(/\n/g, '<br>')}</p>`;
+                
+                // 显示提示（如果有）
+                const hintsContainer = document.getElementById('challenge-hints');
+                const hintsList = document.getElementById('hints-list');
+                
+                if (challenge.hints && challenge.hints.length > 0) {
+                    hintsList.innerHTML = challenge.hints.map(hint => `<li>${hint}</li>`).join('');
+                    hintsContainer.style.display = 'block';
+                } else {
+                    hintsContainer.style.display = 'none';
+                }
+                
+                // 清空提交结果和输入框
+                document.getElementById('submission-result').style.display = 'none';
+                document.getElementById('flag-input').value = '';
+            },
+            
+            // 提交Flag
+            async submitFlag() {
+                if (!this.currentChallenge) return;
+                
+                const flag = document.getElementById('flag-input').value.trim();
+                if (!flag) {
+                    Utils.showAlert('请输入Flag', 'warning');
+                    return;
+                }
+                
+                try {
+                    const data = await Utils.apiRequest(`/challenges/${this.currentChallenge.id}/submit`, {
+                        method: 'POST',
+                        body: JSON.stringify({ flag })
+                    });
+                    
+                    const resultDiv = document.getElementById('submission-result');
+                    resultDiv.style.display = 'block';
+                    
+                    if (data.is_correct) {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> ${data.message}
+                            </div>
+                        `;
+                        // 刷新题目列表和用户信息
+                        this.loadChallenges();
+                        Auth.loadUserProfile();
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i> ${data.message}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('提交Flag失败:', error);
+                }
+            }
+        };
+
+        // 排行榜相关功能
+        const Leaderboard = {
+            // 初始化
+            init() {
+                // 分类选择变化事件
+                document.getElementById('category-select').addEventListener('change', (e) => {
+                    this.loadCategoryLeaderboard(e.target.value);
+                });
+            },
+            
+            // 加载总榜单排行榜
+            async loadGlobalLeaderboard() {
+                try {
+                    const data = await Utils.apiRequest('/leaderboard');
+                    this.displayGlobalLeaderboard(data.leaderboard);
+                } catch (error) {
+                    console.error('加载总榜单排行榜失败:', error);
+                }
+            },
+            
+            // 显示总榜单排行榜
+            displayGlobalLeaderboard(leaderboard) {
+                const tbody = document.getElementById('global-leaderboard-body');
+                
+                if (leaderboard.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">暂无数据</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = leaderboard.map(user => `
+                    <tr class="${user.rank <= 3 ? `user-rank-${user.rank}` : ''}">
+                        <td>${user.rank}</td>
+                        <td>${user.username}</td>
+                        <td>${user.score}</td>
+                        <td>${user.solved_count}</td>
+                        <td>${user.last_solve ? Utils.formatDate(user.last_solve) : '暂无'}</td>
+                    </tr>
+                `).join('');
+            },
+            
+            // 加载分类排行榜
+            async loadCategoryLeaderboard(categoryId) {
+                try {
+                    const data = await Utils.apiRequest(`/leaderboard/category/${categoryId}`);
+                    this.displayCategoryLeaderboard(data.leaderboard);
+                } catch (error) {
+                    console.error('加载分类排行榜失败:', error);
+                }
+            },
+            
+            // 显示分类排行榜
+            displayCategoryLeaderboard(leaderboard) {
+                const tbody = document.getElementById('category-leaderboard-body');
+                
+                if (leaderboard.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">暂无数据</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = leaderboard.map(user => `
+                    <tr class="${user.rank <= 3 ? `user-rank-${user.rank}` : ''}">
+                        <td>${user.rank}</td>
+                        <td>${user.username}</td>
+                        <td>${user.score}</td>
+                        <td>${user.solved_count}</td>
+                    </tr>
+                `).join('');
+            },
+            
+            // 加载分类选项
+            async loadCategories() {
+                try {
+                    const data = await Utils.apiRequest('/categories');
+                    this.populateCategorySelect(data.categories);
+                } catch (error) {
+                    console.error('加载分类失败:', error);
+                }
+            },
+            
+            // 填充分类选择框
+            populateCategorySelect(categories) {
+                const select = document.getElementById('category-select');
+                select.innerHTML = categories.map(category => 
+                    `<option value="${category.id}">${category.name}</option>`
+                ).join('');
+                
+                // 默认加载第一个分类的排行榜
+                if (categories.length > 0) {
+                    this.loadCategoryLeaderboard(categories[0].id);
+                }
+            }
+        };
+
+        // 管理员功能模块
+        const Admin = {
+            // 初始化
+            init() {
+                // 添加题目按钮
+                document.getElementById('add-challenge-btn').addEventListener('click', () => {
+                    this.showAddChallengeModal();
+                });
+                
+                // 添加分类按钮
+                document.getElementById('add-category-btn').addEventListener('click', () => {
+                    this.showAddCategoryModal();
+                });
+                
+                // 系统操作按钮
+                document.getElementById('update-scores-btn').addEventListener('click', () => {
+                    this.updateChallengeScores();
+                });
+                
+                document.getElementById('export-data-btn').addEventListener('click', () => {
+                    this.exportPlatformData();
+                });
+                
+                document.getElementById('clear-cache-btn').addEventListener('click', () => {
+                    this.clearCache();
+                });
+            },
+            
+            // 加载管理员数据
+            async loadAdminData() {
+                try {
+                    // 加载统计信息
+                    const statsData = await Utils.apiRequest('/admin/stats');
+                    this.displayStats(statsData.stats);
+                    
+                    // 加载题目列表
+                    const challengesData = await Utils.apiRequest('/challenges');
+                    this.displayChallenges(challengesData.challenges);
+                    
+                    // 加载用户列表
+                    const usersData = await Utils.apiRequest('/admin/users');
+                    this.displayUsers(usersData.users);
+                    
+                    // 加载分类列表
+                    const categoriesData = await Utils.apiRequest('/categories');
+                    this.displayCategories(categoriesData.categories);
+                    
+                } catch (error) {
+                    console.error('加载管理员数据失败:', error);
+                    Utils.showAlert('加载管理员数据失败，请检查网络连接', 'warning');
+                }
+            },
+            
+            // 显示统计信息
+            displayStats(stats) {
+                document.getElementById('admin-users-count').textContent = stats.total_users || 0;
+                document.getElementById('admin-challenges-count').textContent = stats.total_challenges || 0;
+                document.getElementById('admin-submissions-count').textContent = stats.total_submissions || 0;
+            },
+            
+            // 显示题目列表
+            displayChallenges(challenges) {
+                const tbody = document.getElementById('admin-challenges-list');
+                
+                if (challenges.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">暂无题目</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = challenges.map(challenge => `
+                    <tr>
+                        <td>${challenge.id}</td>
+                        <td>${challenge.title}</td>
+                        <td><span class="badge bg-primary">${challenge.category}</span></td>
+                        <td><span class="badge ${Utils.getDifficultyClass(challenge.difficulty)}">${Utils.getDifficultyText(challenge.difficulty)}</span></td>
+                        <td>${challenge.points}</td>
+                        <td>${challenge.solved_count}</td>
+                        <td>
+                            <span class="badge ${challenge.is_hidden ? 'bg-warning' : 'bg-success'}">
+                                ${challenge.is_hidden ? '隐藏' : '公开'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-challenge" data-id="${challenge.id}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-challenge" data-id="${challenge.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // 添加编辑和删除事件
+                this.addChallengeEvents();
+            },
+            
+            // 显示用户列表
+            displayUsers(users) {
+                const tbody = document.getElementById('admin-users-list');
+                
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">暂无用户</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.score}</td>
+                        <td>${Utils.formatDate(user.created_at)}</td>
+                        <td>
+                            <span class="badge ${user.is_admin ? 'bg-danger' : 'bg-secondary'}">
+                                ${user.is_admin ? '管理员' : '普通用户'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-warning toggle-admin" data-id="${user.id}" data-is-admin="${user.is_admin}">
+                                ${user.is_admin ? '取消管理员' : '设为管理员'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                // 添加管理员切换事件
+                this.addUserEvents();
+            },
+            
+            // 显示分类列表
+            displayCategories(categories) {
+                const container = document.getElementById('admin-categories-list');
+                
+                if (categories.length === 0) {
+                    container.innerHTML = '<div class="col-12 text-center"><p>暂无分类</p></div>';
+                    return;
+                }
+                
+                container.innerHTML = categories.map(category => `
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${category.name}</h5>
+                                <p class="card-text">${category.description || '暂无描述'}</p>
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">创建: ${Utils.formatDate(category.created_at)}</small>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary edit-category" data-id="${category.id}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-category" data-id="${category.id}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 添加分类操作事件
+                this.addCategoryEvents();
+            },
+            
+            // 添加题目操作事件
+            addChallengeEvents() {
+                // 编辑题目
+                document.querySelectorAll('.edit-challenge').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const challengeId = e.target.closest('button').getAttribute('data-id');
+                        this.editChallenge(challengeId);
+                    });
+                });
+                
+                // 删除题目
+                document.querySelectorAll('.delete-challenge').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const challengeId = e.target.closest('button').getAttribute('data-id');
+                        this.deleteChallenge(challengeId);
+                    });
+                });
+            },
+            
+            // 添加用户操作事件
+            addUserEvents() {
+                // 切换管理员状态
+                document.querySelectorAll('.toggle-admin').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const userId = e.target.getAttribute('data-id');
+                        const isAdmin = e.target.getAttribute('data-is-admin') === 'true';
+                        this.toggleUserAdmin(userId, !isAdmin);
+                    });
+                });
+            },
+            
+            // 添加分类操作事件
+            addCategoryEvents() {
+                // 编辑分类
+                document.querySelectorAll('.edit-category').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryId = e.target.closest('button').getAttribute('data-id');
+                        this.editCategory(categoryId);
+                    });
+                });
+                
+                // 删除分类
+                document.querySelectorAll('.delete-category').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const categoryId = e.target.closest('button').getAttribute('data-id');
+                        this.deleteCategory(categoryId);
+                    });
+                });
+            },
+            
+            // 显示添加题目模态框
+            showAddChallengeModal() {
+                // 创建模态框HTML
+                const modalHTML = `
+                    <div class="modal fade" id="addChallengeModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">添加新题目</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="add-challenge-form">
+                                        <div class="mb-3">
+                                            <label class="form-label">标题 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="title" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">描述 <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" name="description" rows="4" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Flag <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" name="flag" required placeholder="CTF{...}">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">分数 <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" name="points" value="100" min="1" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">难度 <span class="text-danger">*</span></label>
+                                                    <select class="form-select" name="difficulty" required>
+                                                        <option value="easy">简单</option>
+                                                        <option value="medium" selected>中等</option>
+                                                        <option value="hard">困难</option>
+                                                        <option value="expert">专家</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">分类 <span class="text-danger">*</span></label>
+                                            <select class="form-select" name="category_id" required>
+                                                <option value="1">Web</option>
+                                                <option value="2">Pwn</option>
+                                                <option value="3">Reverse</option>
+                                                <option value="4">Crypto</option>
+                                                <option value="5">Misc</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">提示 (每行一个)</label>
+                                            <textarea class="form-control" name="hints" rows="3" placeholder="每行输入一个提示"></textarea>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" name="is_hidden">
+                                            <label class="form-check-label">隐藏题目</label>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                    <button type="button" class="btn btn-primary" id="submit-challenge-btn">添加题目</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 添加模态框到页面
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('addChallengeModal'));
+                modal.show();
+                
+                // 添加提交事件
+                document.getElementById('submit-challenge-btn').addEventListener('click', () => {
+                    this.submitChallengeForm();
+                });
+                
+                // 模态框关闭时清理
+                document.getElementById('addChallengeModal').addEventListener('hidden.bs.modal', () => {
+                    document.getElementById('addChallengeModal').remove();
+                });
+            },
+
+            // 提交题目表单
+            async submitChallengeForm() {
+                const form = document.getElementById('add-challenge-form');
+                const formData = new FormData(form);
+                
+                // 获取提交按钮并禁用，防止重复提交
+                const submitBtn = document.getElementById('submit-challenge-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 添加中...';
+                submitBtn.disabled = true;
+                
+                const challengeData = {
+                    title: formData.get('title').trim(),
+                    description: formData.get('description').trim(),
+                    flag: formData.get('flag').trim(),
+                    points: parseInt(formData.get('points')),
+                    difficulty: formData.get('difficulty'),
+                    category_id: parseInt(formData.get('category_id')),
+                    is_hidden: formData.get('is_hidden') === 'on'
+                };
+                
+                // 验证必填字段
+                if (!challengeData.title || !challengeData.description || !challengeData.flag) {
+                    Utils.showAlert('请填写所有必填字段!', 'warning');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    return;
+                }
+                
+                // 处理提示
+                const hintsText = formData.get('hints');
+                if (hintsText && hintsText.trim()) {
+                    challengeData.hints = hintsText.split('\n')
+                        .map(hint => hint.trim())
+                        .filter(hint => hint.length > 0);
+                }
+                
+                console.log('提交题目数据:', challengeData);
+                
+                try {
+                    const response = await Utils.apiRequest('/challenges', {
+                        method: 'POST',
+                        body: JSON.stringify(challengeData)
+                    });
+                    
+                    console.log('创建题目响应:', response);
+                    
+                    Utils.showAlert('题目添加成功!', 'success');
+                    
+                    // 延迟关闭模态框，确保用户看到成功消息
+                    setTimeout(() => {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addChallengeModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                    }, 1000);
+                    
+                    // 延迟刷新数据，避免网络竞争
+                    setTimeout(() => {
+                        this.loadAdminData();
+                    }, 1500);
+                    
+                } catch (error) {
+                    console.error('添加题目失败:', error);
+                    Utils.showAlert('添加题目失败: ' + (error.message || '网络错误'), 'danger');
+                } finally {
+                    // 恢复按钮状态
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            },
+            
+            // 显示添加分类模态框
+            showAddCategoryModal() {
+                const name = prompt("请输入分类名称:");
+                if (!name) return;
+                
+                const description = prompt("请输入分类描述:");
+                
+                this.addCategory(name, description);
+            },
+            
+            // 添加分类
+            async addCategory(name, description) {
+                try {
+                    await Utils.apiRequest('/admin/categories', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            name: name,
+                            description: description
+                        })
+                    });
+                    
+                    Utils.showAlert('分类添加成功!', 'success');
+                    this.loadAdminData();
+                } catch (error) {
+                    Utils.showAlert('添加分类失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 编辑题目
+            async editChallenge(challengeId) {
+                try {
+                    // 获取题目详情
+                    const data = await Utils.apiRequest(`/challenges/${challengeId}`);
+                    const challenge = data.challenge;
+                    
+                    // 创建编辑模态框
+                    const modalHTML = `
+                        <div class="modal fade" id="editChallengeModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">编辑题目</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="edit-challenge-form">
+                                            <div class="mb-3">
+                                                <label class="form-label">标题 <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="title" value="${challenge.title}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">描述 <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" name="description" rows="4" required>${challenge.description}</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Flag <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="flag" value="${challenge.flag}" required>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">分数 <span class="text-danger">*</span></label>
+                                                        <input type="number" class="form-control" name="points" value="${challenge.points}" min="1" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">难度 <span class="text-danger">*</span></label>
+                                                        <select class="form-select" name="difficulty" required>
+                                                            <option value="easy" ${challenge.difficulty === 'easy' ? 'selected' : ''}>简单</option>
+                                                            <option value="medium" ${challenge.difficulty === 'medium' ? 'selected' : ''}>中等</option>
+                                                            <option value="hard" ${challenge.difficulty === 'hard' ? 'selected' : ''}>困难</option>
+                                                            <option value="expert" ${challenge.difficulty === 'expert' ? 'selected' : ''}>专家</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">分类 <span class="text-danger">*</span></label>
+                                                <select class="form-select" name="category_id" required>
+                                                    <option value="1" ${challenge.category_id === 1 ? 'selected' : ''}>Web</option>
+                                                    <option value="2" ${challenge.category_id === 2 ? 'selected' : ''}>Pwn</option>
+                                                    <option value="3" ${challenge.category_id === 3 ? 'selected' : ''}>Reverse</option>
+                                                    <option value="4" ${challenge.category_id === 4 ? 'selected' : ''}>Crypto</option>
+                                                    <option value="5" ${challenge.category_id === 5 ? 'selected' : ''}>Misc</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">提示 (每行一个)</label>
+                                                <textarea class="form-control" name="hints" rows="3" placeholder="每行输入一个提示">${challenge.hints ? challenge.hints.join('\n') : ''}</textarea>
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input class="form-check-input" type="checkbox" name="is_hidden" ${challenge.is_hidden ? 'checked' : ''}>
+                                                <label class="form-check-label">隐藏题目</label>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-primary" id="update-challenge-btn">更新题目</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加模态框到页面
+                    document.body.insertAdjacentHTML('beforeend', modalHTML);
+                    
+                    // 显示模态框
+                    const modal = new bootstrap.Modal(document.getElementById('editChallengeModal'));
+                    modal.show();
+                    
+                    // 添加更新事件
+                    document.getElementById('update-challenge-btn').addEventListener('click', async () => {
+                        await this.updateChallengeForm(challengeId);
+                    });
+                    
+                    // 模态框关闭时清理
+                    document.getElementById('editChallengeModal').addEventListener('hidden.bs.modal', () => {
+                        document.getElementById('editChallengeModal').remove();
+                    });
+                    
+                } catch (error) {
+                    Utils.showAlert('获取题目详情失败: ' + error.message, 'danger');
+                }
+            },
+
+            // 更新题目表单
+            async updateChallengeForm(challengeId) {
+                const form = document.getElementById('edit-challenge-form');
+                const formData = new FormData(form);
+                
+                // 获取提交按钮并禁用
+                const submitBtn = document.getElementById('update-challenge-btn');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 更新中...';
+                submitBtn.disabled = true;
+                
+                const challengeData = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    flag: formData.get('flag'),
+                    points: parseInt(formData.get('points')),
+                    difficulty: formData.get('difficulty'),
+                    category_id: parseInt(formData.get('category_id')),
+                    is_hidden: formData.get('is_hidden') === 'on'
+                };
+                
+                // 处理提示
+                const hintsText = formData.get('hints');
+                if (hintsText.trim()) {
+                    challengeData.hints = hintsText.split('\n')
+                        .map(hint => hint.trim())
+                        .filter(hint => hint.length > 0);
+                }
+                
+                try {
+                    await Utils.apiRequest(`/challenges/${challengeId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(challengeData)
+                    });
+                    
+                    Utils.showAlert('题目更新成功!', 'success');
+                    
+                    // 关闭模态框并刷新数据
+                    bootstrap.Modal.getInstance(document.getElementById('editChallengeModal')).hide();
+                    this.loadAdminData();
+                    
+                } catch (error) {
+                    Utils.showAlert('更新题目失败: ' + error.message, 'danger');
+                } finally {
+                    // 恢复按钮状态
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            },
+            
+            // 删除题目
+            async deleteChallenge(challengeId) {
+                if (!confirm('确定要删除这个题目吗？此操作不可逆！')) {
+                    return;
+                }
+                
+                try {
+                    await Utils.apiRequest(`/challenges/${challengeId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    Utils.showAlert('题目删除成功!', 'success');
+                    this.loadAdminData();
+                } catch (error) {
+                    Utils.showAlert('删除题目失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 切换用户管理员状态
+            async toggleUserAdmin(userId, makeAdmin) {
+                try {
+                    await Utils.apiRequest(`/admin/users/${userId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            is_admin: makeAdmin
+                        })
+                    });
+                    
+                    Utils.showAlert(`用户${makeAdmin ? '设为' : '取消'}管理员成功!`, 'success');
+                    this.loadAdminData();
+                } catch (error) {
+                    Utils.showAlert('操作失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 编辑分类
+            editCategory(categoryId) {
+                Utils.showAlert(`编辑分类 ID: ${categoryId}`, 'info');
+                // 实际实现中应该打开编辑模态框
+            },
+            
+            // 删除分类
+            async deleteCategory(categoryId) {
+                if (!confirm('确定要删除这个分类吗？此操作不可逆！')) {
+                    return;
+                }
+                
+                try {
+                    await Utils.apiRequest(`/admin/categories/${categoryId}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    Utils.showAlert('分类删除成功!', 'success');
+                    this.loadAdminData();
+                } catch (error) {
+                    Utils.showAlert('删除分类失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 更新题目分数
+            async updateChallengeScores() {
+                try {
+                    await Utils.apiRequest('/admin/update-scores', {
+                        method: 'POST'
+                    });
+                    
+                    Utils.showAlert('题目分数更新成功!', 'success');
+                } catch (error) {
+                    Utils.showAlert('更新分数失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 导出平台数据
+            async exportPlatformData() {
+                try {
+                    const data = await Utils.apiRequest('/admin/export-data');
+                    
+                    // 创建下载链接
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `ctf_export_${new Date().toISOString().split('T')[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    Utils.showAlert('数据导出成功!', 'success');
+                } catch (error) {
+                    Utils.showAlert('导出数据失败: ' + error.message, 'danger');
+                }
+            },
+            
+            // 清除缓存
+            async clearCache() {
+                try {
+                    // 这里可以调用后端API清除缓存
+                    // 暂时使用前端本地存储清除作为示例
+                    localStorage.removeItem('ctf_cache_challenges');
+                    localStorage.removeItem('ctf_cache_leaderboard');
+                    
+                    Utils.showAlert('缓存清除成功!', 'success');
+                } catch (error) {
+                    Utils.showAlert('清除缓存失败: ' + error.message, 'danger');
+                }
+            }
+        };
+
+        // 主应用逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化各个模块
+            Auth.init();
+            Challenges.init();
+            Leaderboard.init();
+            Admin.init();
+            
+            // 页面导航
+            document.addEventListener('click', function(e) {
+                if (e.target.matches('[data-page]') || e.target.closest('[data-page]')) {
+                    e.preventDefault();
+                    const page = e.target.getAttribute('data-page') || 
+                                 e.target.closest('[data-page]').getAttribute('data-page');
+                    navigateToPage(page);
+                }
+            });
+            
+            // 页面导航函数
+            function navigateToPage(page) {
+                switch (page) {
+                    case 'home':
+                        Utils.showPage('home-page');
+                        break;
+                    case 'login':
+                        Utils.showPage('login-page');
+                        break;
+                    case 'register':
+                        Utils.showPage('register-page');
+                        break;
+                    case 'admin':
+                        if (Utils.isLoggedIn()) {
+                            Admin.loadAdminData();
+                            Utils.showPage('admin-page');
+                        } else {
+                            Utils.showAlert('请先登录', 'warning');
+                            Utils.showPage('login-page');
+                        }
+                        break;
+                    case 'challenges':
+                        if (Utils.isLoggedIn()) {
+                            Challenges.loadChallenges();
+                            Utils.showPage('challenges-page');
+                        } else {
+                            Utils.showAlert('请先登录', 'warning');
+                            Utils.showPage('login-page');
+                        }
+                        break;
+                    case 'leaderboard':
+                        Leaderboard.loadGlobalLeaderboard();
+                        Leaderboard.loadCategories();
+                        Utils.showPage('leaderboard-page');
+                        break;
+                    case 'profile':
+                        if (Utils.isLoggedIn()) {
+                            Auth.loadUserProfile();
+                            Utils.showPage('profile-page');
+                        } else {
+                            Utils.showAlert('请先登录', 'warning');
+                            Utils.showPage('login-page');
+                        }
+                        break;
+                    default:
+                        Utils.showPage('home-page');
+                }
+            }
+            
+            // 检查认证状态并显示相应页面
+            if (Utils.isLoggedIn()) {
+                Auth.loadUserProfile();
+            }
+            
+            // 显示首页
+            Utils.showPage('home-page');
+        });
+    </script>
+</body>
+</html>
