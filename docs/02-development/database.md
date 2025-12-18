@@ -7,7 +7,7 @@ CTF平台使用MySQL作为主要数据库管理系统，通过SQLAlchemy ORM进�
 ## 2. 数据库ER图
 
 ### 2.1 实体关系图
-![ER图](images/uml/ER.png)
+![ER图](../images/uml/ER.png。
 
 ### 2.2 关系说明
 
